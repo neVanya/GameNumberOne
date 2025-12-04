@@ -1,0 +1,18 @@
+# Настройки экрана
+WIDTH = 800
+HEIGHT = 600
+FPS = 60
+TILE_SIZE = 40
+
+# Цвета
+WHITE = (255, 255, 255)
+BLUE = (100, 149, 237)
+GREEN = (60, 179, 113)
+RED = (220, 20, 60)
+BLACK = (20, 20, 20)
+SKY_BLUE = (135, 206, 235)
+
+# Физика
+GRAVITY = 0.8
+JUMP_POWER = -15
+PLAYER_SPEED = 5

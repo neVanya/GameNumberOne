@@ -1,18 +1,17 @@
 import pygame
 from settings import *
+from animations import create_player_animations
+from particles import create_jump_effect
 
 
 class Player(pygame.sprite.Sprite):
     def __init__(self, x, y):
         super().__init__()
-        # Создаем изображение игрока
-        self.image = pygame.Surface((40, 60))
-        self.image.fill(BLUE)
 
-        # Рисуем лицо
-        pygame.draw.circle(self.image, WHITE, (10, 15), 5)
-        pygame.draw.circle(self.image, WHITE, (30, 15), 5)
-        pygame.draw.arc(self.image, WHITE, (10, 25, 20, 15), 0, 3.14, 2)
+        # Анимации
+        self.animations = create_player_animations()
+        self.current_animation = "idle"
+        self.image = self.animations[self.current_animation].get_current_image()
 
         # Создаем прямоугольник для позиции и столкновений
         self.rect = self.image.get_rect()
@@ -25,8 +24,12 @@ class Player(pygame.sprite.Sprite):
         self.on_ground = False
         self.facing_right = True
 
+        # Для анимаций
+        self.last_animation = "idle"
+        self.jump_pressed = False
+
     def update(self):
-        """Обновление позиции (без проверки столкновений)"""
+        """Обновление позиции и анимации"""
         # Применяем гравитацию
         self.vel_y += GRAVITY
         self.rect.y += self.vel_y
@@ -45,6 +48,28 @@ class Player(pygame.sprite.Sprite):
             self.vel_y = 0
             self.on_ground = True
 
+        # Обновление анимации
+        self.update_animation()
+        self.animations[self.current_animation].update()
+
+        # Получаем текущий кадр
+        self.image = self.animations[self.current_animation].get_current_image()
+
+        # Отражение при движении влево
+        if not self.facing_right:
+            self.image = pygame.transform.flip(self.image, True, False)
+
+    def update_animation(self):
+        """Обновление текущей анимации"""
+        if not self.on_ground:
+            self.current_animation = "jump"
+            if self.animations["jump"].done:
+                self.animations["jump"].reset()
+        elif abs(self.vel_x) > 0.5:
+            self.current_animation = "run"
+        else:
+            self.current_animation = "idle"
+
     def handle_collisions(self, platforms):
         """Обработка столкновений с платформами"""
         self.on_ground = False
@@ -60,17 +85,16 @@ class Player(pygame.sprite.Sprite):
                 elif self.vel_y < 0:
                     self.rect.top = platform.rect.bottom
                     self.vel_y = 0
-                # Столкновение сбоку
-                elif self.vel_x != 0:
-                    if self.vel_x > 0:  # Движемся вправо
-                        self.rect.right = platform.rect.left
-                    elif self.vel_x < 0:  # Движемся влево
-                        self.rect.left = platform.rect.right
 
     def jump(self):
         if self.on_ground:
             self.vel_y = JUMP_POWER
             self.on_ground = False
+            self.animations["jump"].reset()
+
+            # Эффект прыжка (частицы)
+            return create_jump_effect(self.rect.centerx, self.rect.bottom)
+        return None
 
     def move_left(self):
         self.vel_x = -PLAYER_SPEED
